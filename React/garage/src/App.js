@@ -2,18 +2,19 @@ import{ Routes, Route} from 'react-router-dom';
 import About from './components/About';
 import Feedback from './components/Feedback';
 import Home from './components/Home';
-import Navbar from './components/Navbar';
+import LoginSignup from './components/LoginSignup';
 
 function App() {
   
   return(
     <>
-    <Navbar />
     
     <Routes>
       <Route path='/' element={<Home />}></Route>
       <Route path='/aboutus' element={<About />}></Route>
       <Route path='/feedback' element={<Feedback />}></Route>
+      <Route path='/login' element={<LoginSignup />}></Route>
+      
     </Routes>
     </>
   );
