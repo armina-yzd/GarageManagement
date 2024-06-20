@@ -9,7 +9,7 @@ export const Home = () => {
             </div>
             <div className=" p-3">
                 <div className="float-end text-white rounded-4 bg-black">
-                    <Link to='/login' class="btn text-white">&nbsp;SIGN UP&nbsp;&nbsp;/&nbsp;&nbsp;LOG IN &nbsp;</Link>
+                    <Link to='/login' className="btn text-white">&nbsp;SIGN UP&nbsp;&nbsp;/&nbsp;&nbsp;LOG IN &nbsp;</Link>
                 </div>
                 <div className="mt-2">
                     <Link to='/' className="link-offset-2 link-underline link-underline-opacity-0 p-3 text-dark">HOME</Link>

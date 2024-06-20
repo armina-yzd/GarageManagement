@@ -22,7 +22,6 @@ class Service(BaseModel):
     carTag : str
     state : bool
     services : str
-    workerId : str
 
 
 class ServiceRead(BaseModel):
@@ -41,5 +40,13 @@ class Feedback(BaseModel):
 class FeedbackRead(BaseModel):
     feedbackId : int
     serviceId : int
+    feedback : str
+    star : int
+
+
+class FeedbackReadUser(BaseModel):
+    feedbackId : int
+    serviceId : int
+    name : str
     feedback : str
     star : int

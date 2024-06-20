@@ -32,12 +32,12 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    nationalId: str | None = None
+    nationalid: str | None = None
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 
-def authenticate_member(nationalId:str, password:str, db):
-    member = db.query(tables.Member).filter(tables.Member.nationalId == nationalId).first()
+def authenticate_member(nationalid:str, password:str, db):
+    member = db.query(tables.Member).filter(tables.Member.nationalId == nationalid).first()
     
     if not member:
         return False
@@ -48,17 +48,15 @@ def authenticate_member(nationalId:str, password:str, db):
     return member
 
 
-def create_access_token(nationalId: str, expires_delta: timedelta):
-    encode = {'sub': nationalId}
+def create_access_token(nationalid:str, expires_delta: timedelta):
+    encode = {'sub': nationalid}
     expires = datetime.now(timezone.utc) + expires_delta
     encode.update({'exp': expires})
     return jwt.encode(encode, SECRET_KEY, algorithm=ALGORITHM)
     
 
-
-async def get_member(db:db_dependency, nationalId:str):
-
-    return db.query(tables.Member).filter(tables.Member.nationalId == nationalId).first()
+async def get_member(db:db_dependency, nationalid:str):
+    return db.query(tables.Member).filter(tables.Member.nationalId == nationalid).first()
 
 async def get_current_member(token: Annotated[str, Depends(oauth2_scheme)], db:db_dependency):
     credentials_exception = HTTPException(
@@ -66,20 +64,16 @@ async def get_current_member(token: Annotated[str, Depends(oauth2_scheme)], db:d
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        nationalId: str = payload.get("sub")
-    
-        if nationalId is None:
+        nationalid: int = payload.get("sub")
+        if nationalid is None:
             raise credentials_exception
-    
-        token_data = TokenData(nationalId=nationalId)
-    
+        token_data = TokenData(nationalid=nationalid)
     except InvalidTokenError:
         raise credentials_exception
     
-    member = await get_member(db, token_data.nationalId)
+    member = await get_member(db, token_data.nationalid)
     if member is None:
         raise credentials_exception
     return member

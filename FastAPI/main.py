@@ -10,9 +10,9 @@ from sqlalchemy.orm import Session
 import tables
 from accessToken import (ACCESS_TOKEN_EXPIRE_MINUTES, ALGORITHM, SECRET_KEY,
                          Token, TokenData, authenticate_member,
-                         create_access_token, member_dependency)
+                         create_access_token, member_dependency,get_current_member)
 from database import SessionLocal
-from models import Member, Car, Service, Feedback, FeedbackRead, ServiceRead
+from models import Member, Car, Service, Feedback, FeedbackRead, ServiceRead, FeedbackReadUser
 import random
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -56,59 +56,63 @@ def hash(password: str) -> str:
 
 @app.post("/signUp/")
 async def signUpMember(member : Member, db : db_dependency):
-    try:
-        member_test= db.query(tables.Member).filter(and_(tables.Member.nationalId==member.nationalId)).first()
-        if member_test:
-            return {"message" : "ID is already taken"}
 
-        hashed_password = hash(member.password)
-        member.password = hashed_password
-
-        new_member=tables.Member(**member.model_dump())
-
-        db.add(new_member)
-
-        db.commit()
-        db.refresh(new_member)
-
-        return {"message" : "User registered"}
+    member_test= db.query(tables.Member).filter(and_(tables.Member.nationalId==member.nationalId)).first()
+    if member_test:
+        return {"error": "National ID already exists"}  
+    member_test2= db.query(tables.Member).filter(and_(tables.Member.email==member.email)).first()
+    if member_test2:
+        return {"error": "Email already exists"} 
     
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
+    hashed_password = hash(member.password)
+    member.password = hashed_password
+
+    new_member=tables.Member(**member.model_dump())
+
+    db.add(new_member)
+
+    db.commit()
+    db.refresh(new_member)
+
+    token = create_access_token(new_member.nationalId, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
+
+    return {'access_token': token, 'token_type': 'bearer'}
 
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 @app.post('/login/')
 async def loginMember(form_data:Annotated[OAuth2PasswordRequestForm,Depends()], db: Session = Depends(get_db)):
 
-
-    try:
-        member = authenticate_member(form_data.username , form_data.password , db)
-        if not member:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,detail='could not validate passenger')
-        if member.ban:
-            return {"message" : "member ban"}
+    member = authenticate_member(form_data.username , form_data.password , db)
+    if not member:
+        return {'error': 'member does not exist'} 
+    if member.ban:
+        return {'error' : 'member banned'}
         
-        token = create_access_token(member.nationalId, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
-
-        return {'access_token': token, 'token_type': 'bearer'}
+    token = create_access_token(member.nationalId, timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES))
     
-    except Exception as e:
-        print(f"Error: {e}")
-        return False
+    return {'access_token': token, 'token_type': 'bearer'}
+    
+    
+    
+@app.get("/api/members/me",response_model=Member)
+async def get_member(member : Member=Depends(get_current_member)):
+    return member
     
 @app.post("/addCar/")
 async def addCarMember(member:member_dependency, car:Car, db : db_dependency):
     try:
+        
         car_test= db.query(tables.Car).filter(tables.Car.carTag==car.carTag).first()
         if car_test:
             return {"message" : "carTag is already taken"}
-    
+        
         car.nationalId=member.nationalId
+        
         new_car=tables.Car(**car.model_dump())
         db.add(new_car)
         db.commit()
+        
         return {"message": "Car Added"}
         
     except Exception as e:
@@ -273,6 +277,43 @@ async def deleteReserveAdmin( serviceId: int, db: db_dependency):
         db.commit()
         return {"message": "reserve deleted"}
 
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
+    
+
+
+@app.get("/feedbackSpecific/{services}",response_model=List[FeedbackReadUser])
+async def readSpecificFeedback(db: db_dependency, services: str):
+    try :
+        services = db.query(tables.Service).filter(tables.Service.services==services).all()
+        all_feedbacks = []
+        for servic in services:
+            feedbacks = db.query(tables.Feedback).filter(tables.Feedback.serviceId==servic.serviceId).all()
+            all_feedbacks.extend(feedbacks)
+
+
+        read_all_feedbacks  = []
+        for feedback in all_feedbacks:
+            member = db.query(tables.Member).join(tables.Car, tables.Member.nationalId == tables.Car.nationalId).filter(
+            tables.Car.carTag == tables.Service.carTag,
+            tables.Service.serviceId == feedback.serviceId
+            ).first()
+            if member:
+            
+                readFeedback = FeedbackReadUser(
+                    name=f"{member.firstName} {member.lastName}",
+                    feedback=feedback.feedback,
+                    feedbackId=feedback.feedbackId,
+                    serviceId=feedback.serviceId,
+                    star=feedback.star
+                )
+                read_all_feedbacks.append(readFeedback)
+
+    
+        return read_all_feedbacks
+    
 
     except Exception as e:
         print(f"Error: {e}")
