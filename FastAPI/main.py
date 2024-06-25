@@ -78,14 +78,13 @@ async def signUpMember(member : Member, db : db_dependency):
 
     return {'access_token': token, 'token_type': 'bearer'}
 
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="login")
 @app.post('/login/')
 async def loginMember(form_data:Annotated[OAuth2PasswordRequestForm,Depends()], db: Session = Depends(get_db)):
 
     member = authenticate_member(form_data.username , form_data.password , db)
     if not member:
-        return {'error': 'member does not exist'} 
+        return {'error': 'wrong password or username'} 
     if member.ban:
         return {'error' : 'member banned'}
         
@@ -93,11 +92,15 @@ async def loginMember(form_data:Annotated[OAuth2PasswordRequestForm,Depends()], 
     
     return {'access_token': token, 'token_type': 'bearer'}
     
-    
-    
-@app.get("/api/members/me",response_model=Member)
+@app.get("/api/members/me")
 async def get_member(member : Member=Depends(get_current_member)):
-    return member
+    try:
+        if member:
+            return member
+        return {'error' : 'no token'}
+    except Exception as e:
+        print(f"Error: {e}")
+        return False
     
 @app.post("/addCar/")
 async def addCarMember(member:member_dependency, car:Car, db : db_dependency):
@@ -118,7 +121,6 @@ async def addCarMember(member:member_dependency, car:Car, db : db_dependency):
     except Exception as e:
         print(f"Error: {e}")
         return False
-
 
 @app.post("/addFeedback/{serviceId}")
 async def addFeedbackMember(serviceId:int, feedback:Feedback, db : db_dependency):
@@ -148,9 +150,13 @@ async def addServiceMember(member:member_dependency,carTag: str, service:Service
         print(f"Error: {e}")
         return False
 
-
-@app.put("/changeInfo")
+@app.put("/changeInfo/")
 async def changeInfoMember(member:member_dependency,upMember:Member, db : db_dependency):
+    member_test2= db.query(tables.Member).filter(and_(tables.Member.email==upMember.email)).first()
+    if member_test2:
+        if member_test2.nationalId != member.nationalId:
+            if member_test2:
+                return {"error": "Email already exists"} 
     try:
         db.query(tables.Member).filter(tables.Member.nationalId==member.nationalId).update({'firstName' : upMember.firstName,
                                                                                     'lastName' : upMember.lastName,
@@ -164,8 +170,7 @@ async def changeInfoMember(member:member_dependency,upMember:Member, db : db_dep
         print(f"Error: {e}")
         return False
     
-
-@app.get("/reserveMember/", response_model=list[Service])
+@app.get("/reserveMember/")
 async def readReserveMember(member:member_dependency,db: db_dependency):
     cars = db.query(tables.Car).filter(and_(tables.Car.nationalId==member.nationalId)).all()
     all_services = []
@@ -176,25 +181,19 @@ async def readReserveMember(member:member_dependency,db: db_dependency):
 
     return all_services
     
-    
 @app.get("/carMember/", response_model=list[Car])
 async def readCarMember(member:member_dependency,db: db_dependency):
 
     cars = db.query(tables.Car).filter(and_(tables.Car.nationalId==member.nationalId)).all()
     return cars
 
-
 @app.delete('/deleteReserve/{serviceId}')
 async def deleteReserveUser(member: member_dependency, serviceId: int, db: db_dependency):
     try:
-        cars = db.query(tables.Car).filter(and_(tables.Car.nationalId==member.nationalId)).all()
-
-        for car in cars :
-            services = db.query(tables.Service).filter(and_(tables.Service.carTag==car.carTag)).all()
+        service_delete = db.query(tables.Service).join(tables.Car, tables.Service.carTag == tables.Car.carTag).join(tables.Member, tables.Member.nationalId == tables.Car.nationalId).filter(
+        tables.Member.nationalId == member.nationalId,
+        tables.Service.serviceId == serviceId).first()
         
-        for service in services :
-            service_delete = db.query(tables.Service).filter(and_(service.serviceId==serviceId)).first()
-
         if(service_delete):
             db.delete(service_delete)
             db.commit()
@@ -206,7 +205,6 @@ async def deleteReserveUser(member: member_dependency, serviceId: int, db: db_de
         print(f"Error: {e}")
         return False
     
-
 @app.put("/changeReserve/{serviceId}")
 async def changeReserveUser(member:member_dependency,serviceId: int,upService:Service, db : db_dependency):
     try:
@@ -231,7 +229,6 @@ async def changeReserveUser(member:member_dependency,serviceId: int,upService:Se
         print(f"Error: {e}")
         return False
     
-
 @app.get("/car/", response_model=list[Car])
 async def readCar(db: db_dependency):
 
@@ -244,7 +241,6 @@ async def readMember(db: db_dependency):
     members = db.query(tables.Member).all()
     return members
 
-
 @app.get("/service/", response_model=list[ServiceRead])
 async def readService(db: db_dependency):
 
@@ -256,7 +252,6 @@ async def readFeedback(db: db_dependency):
 
     feedbacks = db.query(tables.Feedback).all()
     return feedbacks
-
 
 @app.get("/banUser/{nationalId}")
 async def banUser(nationalId:int, db : db_dependency):
@@ -281,8 +276,6 @@ async def deleteReserveAdmin( serviceId: int, db: db_dependency):
     except Exception as e:
         print(f"Error: {e}")
         return False
-    
-
 
 @app.get("/feedbackSpecific/{services}",response_model=List[FeedbackReadUser])
 async def readSpecificFeedback(db: db_dependency, services: str):

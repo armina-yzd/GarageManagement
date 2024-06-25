@@ -18,7 +18,7 @@ class Car(BaseModel):
     nationalId : str
 
 class Service(BaseModel):
-    date : datetime
+    date : str
     carTag : str
     state : bool
     services : str

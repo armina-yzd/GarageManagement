@@ -1,0 +1,116 @@
+/* Google Font Link */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@200;300;400;500;600;700&display=swap");
+
+.mainn {
+  margin: 0;
+  box-sizing: border-box;
+  font-family: "Poppins", sans-serif;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(66, 66, 66);
+  padding: 30px;
+}
+.container1 {
+  margin-right: 200px;
+  position: relative;
+  background: #fff;
+  padding: 40px 30px;
+}
+
+.forms1 .form-content1 .title1 {
+  position: relative;
+  font-size: 24px;
+  font-weight: 500;
+  color: #333;
+}
+.forms1 .form-content1 .title1:before {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 25px;
+  background: rgb(66, 66, 66);
+}
+.forms1 .form-content1 .input-boxes1 {
+  margin-top: 30px;
+}
+.forms1 .form-content1 .input-box1 {
+  display: flex;
+  align-items: center;
+  height: 50px;
+  width: 100%;
+  margin: 10px 0;
+  position: relative;
+}
+.form-content1 .input-box1 .input1 {
+  height: 100%;
+  width: 100%;
+  outline: none;
+  border: none;
+  padding: 0 30px;
+  font-size: 16px;
+  font-weight: 500;
+  border-bottom: 2px solid rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+.form-content1 .input-box1 .input1:focus,
+.form-content1 .input-box1 .input1:valid {
+  border-color: rgb(66, 66, 66);
+}
+.form-content1 .input-box1 {
+  position: absolute;
+  color: rgb(66, 66, 66);
+  font-size: 17px;
+}
+.forms1 .form-content1 .text {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+.forms1 .form-content1 .text a {
+  text-decoration: none;
+}
+.forms1 .form-content1 .text a:hover {
+  text-decoration: underline;
+}
+.forms1 .form-content1 .button {
+  color: #fff;
+  margin-top: 40px;
+}
+.forms1 .form-content1 .button .input1 {
+  color: #fff;
+  background: rgb(66, 66, 66);
+  border-radius: 6px;
+  padding: 0;
+  cursor: pointer;
+  transition: all 0.4s ease;
+}
+.forms1 .form-content1 .button .input1:hover {
+  background: rgb(0, 0, 0);
+}
+.forms1 .form-content1 label {
+  color: rgb(0, 0, 238);
+  cursor: pointer;
+}
+.forms1 .form-content1 label:hover {
+  text-decoration: underline;
+}
+.forms1 .form-content1 .login-text,
+.forms1 .form-content1 .sign-up-text {
+  text-align: center;
+  margin-top: 25px;
+}
+
+@media (max-width: 730px) {
+  .container .cover {
+    display: none;
+  }
+  .form-content1,
+  .form-content1 .signup-form {
+    width: 100%;
+  }
+
+}

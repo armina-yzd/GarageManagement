@@ -25,7 +25,7 @@ class Service(Base):
     __tablename__ = 'service'
 
     serviceId = Column(Integer, primary_key=True, autoincrement=True)
-    date = Column(DateTime, nullable=False)
+    date = Column(String, nullable=False)
     carTag = Column(String, nullable=False)
     state = Column(Boolean, nullable=False)
     services = Column(String, nullable=False)

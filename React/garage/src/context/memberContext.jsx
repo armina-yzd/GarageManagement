@@ -11,21 +11,33 @@ export const MemberProvider = props =>{
     const [token, setToken] = useState(localStorage.getItem("memberToken"));
     useEffect(() => {
         const fetchMember = async () => {
-            const requestOptions = {
-                method: "GET",
-                headers: {
-                    "Context_Type": "application/json",
-                    Authorization: "Bearer " + token,
-                },
-            };
-            const response = await fetch("/api/members/me",requestOptions);
-            if(!response.ok){
-                setToken(null);
+            try {
+                const requestOptions = {
+                    method: 'GET',
+                    headers: {
+                        "Content-Type": "application/json",
+                        Authorization: "Bearer " + token,
+                    },
+                };
+                const response = await fetch("http://127.0.0.1:8000/api/members/me", requestOptions);
+        
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.error) {
+                        setToken(null);
+                    }
+                    
+                localStorage.setItem("memberToken",token)
+                } else {
+                    console.error("Error fetching member data:", response.status);
+                }
+            } catch (error) {
+                console.error("Error fetching member data:", error);
             }
-            localStorage.setItem("memberToken",token)
         };
+        
         fetchMember();
-    },[token]);
+    }, [token]);
 
     return(
         <memberContext.Provider value={[token,setToken]}>

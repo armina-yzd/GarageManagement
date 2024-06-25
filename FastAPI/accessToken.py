@@ -64,6 +64,7 @@ async def get_current_member(token: Annotated[str, Depends(oauth2_scheme)], db:d
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
+    
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         nationalid: int = payload.get("sub")
